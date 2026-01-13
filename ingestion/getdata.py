@@ -1,4 +1,4 @@
-# ragslides/ingestion/google_reader.py
+# ragslides/ingestion/getdata.py
 
 from pathlib import Path
 from typing import List, Dict, Any, Literal
@@ -62,7 +62,8 @@ def load_google_doc(
     credentials,
     document_id: str,
 ) -> List[Dict[str, Any]]:
-    # TODO: add logic
+
+    # TODO:  add logic
     pass
 
 
