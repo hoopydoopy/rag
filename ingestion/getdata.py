@@ -1,4 +1,4 @@
-# ragslides/ingestion/getdata.py
+# File: ragslides/ingestion/getdata.py
 
 from pathlib import Path
 from typing import List, Dict, Any, Literal
@@ -6,6 +6,29 @@ from typing import List, Dict, Any, Literal
 import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+
+# =======================
+# DEFAULT SECRET DIR
+# =======================
+SECRET_DIR = Path("secret")
+
+# Default filenames for each source type
+DEFAULT_KEYS = {
+    "sheets": "sheets_service_account.json",
+    "docs": "docs_service_account.json",
+}
+
+# Default scopes for each source type
+DEFAULT_SCOPES = {
+    "sheets": [
+        "https://www.googleapis.com/auth/spreadsheets.readonly",
+        "https://www.googleapis.com/auth/drive.readonly",
+    ],
+    "docs": [
+        "https://www.googleapis.com/auth/documents.readonly",
+        "https://www.googleapis.com/auth/drive.readonly",
+    ],
+}
 
 # =======================
 # AUTH
@@ -63,31 +86,6 @@ def load_google_sheet(
     spreadsheet_id: str,
     worksheet_name: str | None = None,
 ) -> List[Dict[str, Any]]:
-    """
-    Loads a Google Sheet and converts each row into a normalized document.
-
-    INPUT:
-        credentials: Google Credentials
-        spreadsheet_id: Google Sheets file ID
-        worksheet_name: Optional worksheet name (defaults to first sheet)
-
-    OUTPUT:
-        List of documents, one per row:
-
-        [
-            {
-                "content": "Region: APAC | Year: 2024 | Marketing Spend: 12000000 | Net Profit: 6200000",
-                "metadata": {
-                    "region": "APAC",
-                    "year": 2024,
-                    "marketing_spend": 12000000,
-                    "net_profit": 6200000,
-                    "source": "google_sheets",
-                    "spreadsheet_id": "..."
-                }
-            }
-        ]
-    """
     # TODO: fetch rows from sheet
     # TODO: build one document per row
     pass
@@ -103,29 +101,6 @@ def load_google_doc(
     credentials,
     document_id: str,
 ) -> List[Dict[str, Any]]:
-    """
-    Loads a Google Doc and converts its content into documents.
-
-    INPUT:
-        credentials: Google Credentials
-        document_id: Google Docs file ID
-
-    OUTPUT:
-        List of documents, one per paragraph / section:
-
-        [
-            {
-                "content": "Marketing spend increased significantly in APAC in 2024.",
-                "metadata": {
-                    "source": "google_docs",
-                    "document_id": "...",
-                    "section": "APAC Performance 2024",
-                    "year": 2024,
-                    "region": "APAC"
-                }
-            }
-        ]
-    """
     # TODO: fetch document text
     # TODO: split into logical chunks
     # TODO: attach metadata
@@ -140,20 +115,26 @@ def load_google_doc(
 def load_google_source(
     *,
     source_type: Literal["sheets", "docs"],
-    credentials,
+    credentials: Credentials | None = None,
     **kwargs,
 ) -> List[Dict[str, Any]]:
     """
     Unified loader for Google data sources.
 
-    INPUT:
-        source_type: "sheets" or "docs"
-        credentials: Google Credentials
-        **kwargs: arguments specific to the source type
-
-    OUTPUT:
-        List of normalized documents (content + metadata)
+    If `credentials` is None, automatically picks the default JSON key
+    from the `secret/` folder based on `source_type`.
     """
+
+    if credentials is None:
+        if source_type not in DEFAULT_KEYS:
+            raise ValueError(f"No default key defined for source_type: {source_type}")
+
+        key_file = SECRET_DIR / DEFAULT_KEYS[source_type]
+        scopes = DEFAULT_SCOPES[source_type]
+        credentials = get_google_credentials(
+            service_account_file=key_file, scopes=scopes
+        )
+
     if source_type == "sheets":
         return load_google_sheet(credentials=credentials, **kwargs)
 
