@@ -1,0 +1,14 @@
+# Google APIs
+gspread
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Data handling
+pandas
+
+# RAG / embeddings
+sentence-transformers
+
+# Utilities
+python-dotenv
