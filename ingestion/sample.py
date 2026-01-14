@@ -1,4 +1,4 @@
-# ragslides/ingestion/sheets_reader.py
+# rag/ingestion/sheets_reader.py
 import os
 from pathlib import Path
 import gspread

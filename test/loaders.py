@@ -27,7 +27,7 @@ def test_real_google_sheet():
 # Real Google Docs test
 # ----------------------
 def test_real_google_doc():
-    document_id = ""
+    document_id = "1fkZXb3s78o2-Aw0HAyz3PPKYl2dcD7vp1yOoP6ZvV3U"
 
     docs = load_google_source(
         source_type="docs",
@@ -42,5 +42,5 @@ def test_real_google_doc():
 
 
 if __name__ == "__main__":
-    test_real_google_sheet()
+    # test_real_google_sheet()
     test_real_google_doc()

@@ -1,4 +1,4 @@
-# ragslides/core/retrieval_plan.py
+# rag/core/retrieval_plan.py
 
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any

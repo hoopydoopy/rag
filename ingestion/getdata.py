@@ -1,4 +1,4 @@
-# File: ragslides/ingestion/getdata.py
+# File: rag/ingestion/getdata.py
 
 from pathlib import Path
 from typing import List, Dict, Any, Literal
@@ -101,10 +101,11 @@ def load_google_doc(
     credentials,
     document_id: str,
 ) -> List[Dict[str, Any]]:
-    # TODO: fetch document text
-    # TODO: split into logical chunks
-    # TODO: attach metadata
-    pass
+    service = get_docs_client(credentials)
+    document = service.documents().get(documentId=document_id).execute()
+
+    print(f"The title of the document is: {document.get('title')}")
+    return document.get("title")
 
 
 # =======================

@@ -1,4 +1,4 @@
-# ragslides/core/slide_spec.py
+# rag/core/slide_spec.py
 
 from dataclasses import dataclass
 from typing import Literal, Optional, Dict, Any

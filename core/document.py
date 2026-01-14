@@ -1,4 +1,4 @@
-# ragslides/core/document.py
+# rag/core/document.py
 
 from dataclasses import dataclass
 from typing import Dict, Any
