@@ -9,6 +9,7 @@ pandas
 
 # RAG / embeddings
 sentence-transformers
+faiss-cpu
 
 # Utilities
 python-dotenv
