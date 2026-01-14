@@ -86,9 +86,34 @@ def load_google_sheet(
     spreadsheet_id: str,
     worksheet_name: str | None = None,
 ) -> List[Dict[str, Any]]:
-    # TODO: fetch rows from sheet
-    # TODO: build one document per row
-    pass
+    client = gspread.authorize(credentials)
+    spreadsheet = client.open_by_key(spreadsheet_id)
+
+    if worksheet_name:
+        sheet = spreadsheet.worksheet(worksheet_name)
+    else:
+        sheet = spreadsheet.sheet1
+
+    rows = sheet.get_all_records()
+
+    documents: List[Dict[str, Any]] = []
+
+    for row in rows:
+        content = " | ".join(f"{key}: {value}" for key, value in row.items())
+
+        documents.append(
+            {
+                "content": content,
+                "metadata": {
+                    **row,
+                    "source": "google_sheets",
+                    "spreadsheet_id": spreadsheet_id,
+                    "worksheet": sheet.title,
+                },
+            }
+        )
+
+    return documents
 
 
 # =======================

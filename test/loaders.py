@@ -6,7 +6,7 @@ from ingestion.getdata import load_google_source
 # ----------------------
 def test_real_google_sheet():
     # Provide real spreadsheet ID and worksheet name
-    spreadsheet_id = ""
+    spreadsheet_id = "1wb9RxFEt7oGWykRdnTTJBf5uydd0ly9vQk6siqEAdss"
     worksheet_name = "streamflix"
 
     docs = load_google_source(
@@ -42,5 +42,5 @@ def test_real_google_doc():
 
 
 if __name__ == "__main__":
-    # test_real_google_sheet()
-    test_real_google_doc()
+    test_real_google_sheet()
+    # test_real_google_doc()
