@@ -127,10 +127,109 @@ def load_google_doc(
     document_id: str,
 ) -> List[Dict[str, Any]]:
     service = get_docs_client(credentials)
-    document = service.documents().get(documentId=document_id).execute()
+    doc = service.documents().get(documentId=document_id).execute()
 
-    print(f"The title of the document is: {document.get('title')}")
-    return document.get("title")
+    title = doc.get("title", "")
+    documents: List[Dict[str, Any]] = []
+    order = 0
+
+    # ---------
+    # 1. Find content blocks (tabs OR body)
+    # ---------
+    content_blocks = []
+
+    if "tabs" in doc:
+        # Newer tabbed docs
+        for tab in doc["tabs"]:
+            body = tab.get("documentTab", {}).get("body", {})
+            content_blocks.extend(body.get("content", []))
+    else:
+        # Classic docs (most common)
+        body = doc.get("body", {})
+        content_blocks = body.get("content", [])
+
+    # ---------
+    # 2. Walk blocks in reading order
+    # ---------
+    for block in content_blocks:
+
+        # Ignore layout-only blocks
+        if "sectionBreak" in block:
+            continue
+
+        # ---------
+        # PARAGRAPHS / HEADINGS
+        # ---------
+        if "paragraph" in block:
+            paragraph = block["paragraph"]
+            elements = paragraph.get("elements", [])
+
+            text_parts = []
+            for el in elements:
+                if "textRun" in el:
+                    text_parts.append(el["textRun"].get("content", ""))
+
+            text = "".join(text_parts).strip()
+            if not text:
+                continue
+
+            style = paragraph.get("paragraphStyle", {}).get("namedStyleType", "")
+            block_type = "heading" if style.startswith("HEADING") else "paragraph"
+
+            documents.append(
+                {
+                    "content": text,
+                    "metadata": {
+                        "source": "google_docs",
+                        "document_id": document_id,
+                        "title": title,
+                        "block_type": block_type,
+                        "order": order,
+                    },
+                }
+            )
+            order += 1
+
+        # ---------
+        # TABLES
+        # ---------
+        elif "table" in block:
+            table = block["table"]
+            rows = table.get("tableRows", [])
+
+            table_lines = []
+            for row in rows:
+                cell_texts = []
+                for cell in row.get("tableCells", []):
+                    cell_parts = []
+                    for cell_block in cell.get("content", []):
+                        if "paragraph" in cell_block:
+                            for el in cell_block["paragraph"].get("elements", []):
+                                if "textRun" in el:
+                                    cell_parts.append(el["textRun"].get("content", ""))
+                    cell_texts.append("".join(cell_parts).strip())
+
+                table_lines.append(" | ".join(cell_texts))
+
+            table_text = "\n".join(table_lines).strip()
+            if not table_text:
+                continue
+
+            documents.append(
+                {
+                    "content": table_text,
+                    "metadata": {
+                        "source": "google_docs",
+                        "document_id": document_id,
+                        "title": title,
+                        "block_type": "table",
+                        "order": order,
+                    },
+                }
+            )
+            order += 1
+
+    return documents
 
 
 # =======================

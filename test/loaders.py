@@ -42,5 +42,5 @@ def test_real_google_doc():
 
 
 if __name__ == "__main__":
-    test_real_google_sheet()
-    # test_real_google_doc()
+    # test_real_google_sheet()
+    test_real_google_doc()
