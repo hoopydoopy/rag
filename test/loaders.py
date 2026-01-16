@@ -41,6 +41,25 @@ def test_real_google_doc():
         assert "metadata" in docs[0]
 
 
+# ----------------------
+# Real PDF Test
+# ----------------------
+def test_real_pdf():
+    file_id = "1TKl-IZsX-WGMVEI6Q5LLkV71Ah8rsLF5"
+    
+    docs = load_google_source(
+        source_type="pdf",
+        file_id=file_id
+    )
+    
+    print("PDF loader output:", docs)
+    assert isinstance(docs, list)
+    if docs:
+        assert "content" in docs[0]
+        assert "metadata" in docs[0]
+
+
 if __name__ == "__main__":
-    test_real_google_sheet()
+    # test_real_google_sheet()
     # test_real_google_doc()
+    test_real_pdf()

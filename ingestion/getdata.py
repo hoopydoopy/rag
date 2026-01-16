@@ -7,6 +7,10 @@ import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
+import io
+import pdfplumber
+from googleapiclient.http import MediaIoBaseDownload
+
 # =======================
 # DEFAULT SECRET DIR
 # =======================
@@ -16,6 +20,7 @@ SECRET_DIR = Path("secret")
 DEFAULT_KEYS = {
     "sheets": "sheets_service_account.json",
     "docs": "docs_service_account.json",
+    "pdf": "pdf_service_account.json"
 }
 
 # Default scopes for each source type
@@ -28,6 +33,9 @@ DEFAULT_SCOPES = {
         "https://www.googleapis.com/auth/documents.readonly",
         "https://www.googleapis.com/auth/drive.readonly",
     ],
+    "pdf": [
+        "https://www.googleapis.com/auth/drive"
+    ]
 }
 
 # =======================
@@ -75,6 +83,16 @@ def get_docs_client(credentials):
     return build("docs", "v1", credentials=credentials)
 
 
+def get_pdf_client(credentials):
+    """
+    INPUT:
+        credentials: Google Credentials
+    OUTPUT:
+        Google Drive API client (used for PDF files)
+    """
+    return build("drive", "v3", credentials=credentials)
+
+
 # =======================
 # SHEETS
 # =======================
@@ -115,7 +133,7 @@ def load_google_sheet(
 
     return documents
 
-
+# =======================
 # DOCS
 # =======================
 
@@ -132,6 +150,47 @@ def load_google_doc(
     return document.get("title")
 
 
+# ======================
+# PDF
+# ======================
+
+def load_google_pdf(
+    *,
+    credentials,
+    file_id: str,
+) -> List[Dict[str, Any]]:
+    drive_service = get_pdf_client(credentials)
+    
+    # Download PDF into memory
+    request = drive_service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+        
+    fh.seek(0)
+
+    # Extract text using pdfplumber
+    full_text = ""
+    with pdfplumber.open(fh) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                full_text += text + "\n"
+    
+    return [
+        {
+            "content": full_text.strip(),
+            "metadata": {
+                "source": "google_pdf",
+                "file_id": file_id
+            }
+        }
+    ]
+
+
 # =======================
 # UNIFIED ENTRY POINT
 # =======================
@@ -139,7 +198,7 @@ def load_google_doc(
 
 def load_google_source(
     *,
-    source_type: Literal["sheets", "docs"],
+    source_type: Literal["sheets", "docs", "pdf"],
     credentials: Credentials | None = None,
     **kwargs,
 ) -> List[Dict[str, Any]]:
@@ -165,5 +224,8 @@ def load_google_source(
 
     if source_type == "docs":
         return load_google_doc(credentials=credentials, **kwargs)
+    
+    if source_type == "pdf":
+        return load_google_pdf(credentials=credentials, **kwargs)
 
     raise ValueError(f"Unsupported source_type: {source_type}")
