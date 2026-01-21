@@ -12,5 +12,8 @@ pandas
 sentence-transformers
 faiss-cpu
 
+fastapi
+uvicorn
+
 # Utilities
 python-dotenv
